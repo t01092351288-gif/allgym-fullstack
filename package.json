@@ -1,0 +1,18 @@
+{
+  "name": "allgym-fullstack",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "npm --prefix allgym-backend install && npm --prefix allgym-frontend install",
+    "docker:up": "docker compose -f allgym-backend/docker-compose.yml up -d db redis",
+    "docker:down": "docker compose -f allgym-backend/docker-compose.yml down",
+    "migrate": "npm --prefix allgym-backend run migrate",
+    "seed": "npm --prefix allgym-backend run seed",
+    "setup": "npm run install:all && npm run docker:up && npm run migrate && npm run seed",
+    "dev": "concurrently \"npm --prefix allgym-backend run dev\" \"npm --prefix allgym-frontend run dev\"",
+    "build": "npm --prefix allgym-frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

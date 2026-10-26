@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>올짐 피트니스 예약 (실제 백엔드 연동)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+<style>
+  :root {
+    --bg:#fff; --fg:#0a0a0a; --muted:#6b7280; --line:#e5e7eb;
+    --accent:#0a0a0a; --green:#10b981; --orange:#f59e0b; --red:#ef4444;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:Pretendard,system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.5}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;padding:24px 18px 96px;position:relative}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .logo{font-weight:800;letter-spacing:-.02em}
+  .badge{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+  h1{font-size:22px;margin:0 0 8px;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:18px;margin:0 0 12px;font-weight:700}
+  p{margin:0 0 8px;color:var(--muted)}
+  .card{border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;background:#fff}
+  .card.btn{cursor:pointer;transition:all .15s}
+  .card.btn:hover{border-color:var(--fg);transform:translateY(-1px)}
+  .btn-primary{display:block;width:100%;min-height:48px;border-radius:var(--radius);border:0;background:var(--fg);color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+  .btn-primary:disabled{background:#9ca3af;cursor:not-allowed}
+  .btn-ghost{display:block;width:100%;min-height:48px;border-radius:var(--radius);border:1px solid var(--line);background:#fff;color:var(--fg);font-weight:600;font-size:16px;cursor:pointer;margin-top:8px}
+  .btn-kakao{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;border-radius:var(--radius);border:0;background:#FEE500;color:#000;font-weight:700;font-size:16px;cursor:pointer}
+  input{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:var(--radius);font-size:16px;font-family:inherit}
+  input:focus{outline:0;border-color:var(--fg)}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1}
+  .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .slot{min-height:44px;border:1px solid var(--line);border-radius:10px;text-align:center;display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;background:#fff}
+  .slot[data-status="OPEN"]{color:var(--green);border-color:#a7f3d0}
+  .slot[data-status="OPEN"]:hover{background:#ecfdf5}
+  .slot[data-status="FULL"],.slot[data-status="CLOSED"]{color:#9ca3af;background:#f9fafb;cursor:not-allowed}
+  .slot[data-status="LOCKED"]{color:var(--orange);border-color:#fde68a;background:#fffbeb}
+  .slot[data-status="BLOCKED"]{color:var(--red);border-color:#fecaca;background:#fef2f2;cursor:not-allowed}
+  .slot.selected{background:var(--fg);color:#fff;border-color:var(--fg)}
+  .date-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 -2px 12px}
+  .date-chip{min-width:64px;padding:8px 0;border:1px solid var(--line);border-radius:12px;text-align:center;cursor:pointer;background:#fff;flex-shrink:0}
+  .date-chip .d{font-size:13px;color:var(--muted)}
+  .date-chip .n{font-weight:700;font-size:18px;margin-top:2px}
+  .date-chip.selected{background:var(--fg);color:#fff;border-color:var(--fg)}
+  .date-chip.selected .d{color:#d1d5db}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0a0a0a;color:#fff;padding:12px 18px;border-radius:999px;font-size:14px;z-index:99;animation:up .3s}
+  @keyframes up{from{opacity:0;transform:translate(-50%,12px)}}
+  .role-pin{position:fixed;top:18px;right:18px;display:flex;gap:6px}
+  .role-pin button{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;cursor:pointer}
+  .role-pin button.active{background:var(--fg);color:#fff;border-color:var(--fg)}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+  .res-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+  .res-item .meta{font-size:13px;color:var(--muted)}
+  .tag{font-size:12px;padding:3px 8px;border-radius:999px;background:#f3f4f6;color:var(--muted)}
+  .tag.green{background:#d1fae5;color:#065f46}
+  .tag.orange{background:#fed7aa;color:#92400e}
+  .tag.red{background:#fecaca;color:#991b1b}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .stat-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}
+  .stat-card .label{font-size:12px;color:var(--muted)}
+  .stat-card .value{font-size:24px;font-weight:800;margin-top:4px}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+  .bar .b{flex:1;height:8px;background:#f3f4f6;border-radius:99px;overflow:hidden}
+  .bar .b>span{display:block;height:100%;background:var(--fg)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="role-pin" id="rolePin"></div>
+  <div class="topbar"><div class="logo">올짐</div><div class="badge" id="userBadge">비로그인</div></div>
+  <div id="view"></div>
+</div>
+
+<script>
+const API = window.location.origin.includes('4000') ? '' : 'http://localhost:4000';
+const $ = (sel,root=document)=>root.querySelector(sel);
+const view = $('#view');
+let state = { me:null, branch:null, date:null, slot:null };
+
+const api = async (path, opts={}) => {
+  const r = await fetch(API + '/v1' + path, {
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const j = await r.json();
+  if (!j.success) throw new Error(j.error?.message || '오류');
+  return j.data;
+};
+
+const toast = (msg) => {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2200);
+};
+
+const renderRolePin = () => {
+  const pin = $('#rolePin');
+  if (!state.me) { pin.innerHTML = ''; return; }
+  const roles = [['CUSTOMER','고객'],['TRAINER','트레이너'],['ADMIN','관리자']];
+  pin.innerHTML = roles.map(([k,v])=>`<button class="${state.me.role===k?'active':''}" data-role="${k}">${v}</button>`).join('');
+  pin.querySelectorAll('button').forEach(b=>b.onclick = async ()=>{
+    await api('/auth/dev/switch-role',{method:'POST',body:{role:b.dataset.role}});
+    await refreshMe(); renderHome();
+  });
+};
+
+const refreshMe = async () => {
+  const {user} = await api('/auth/me');
+  state.me = user;
+  $('#userBadge').textContent = user ? `${user.name} · ${user.role}` : '비로그인';
+  renderRolePin();
+};
+
+// ────────── 로그인 ──────────
+const renderLogin = () => {
+  view.innerHTML = `
+    <h1>로그인</h1>
+    <p>카카오 또는 전화번호로 로그인하세요</p>
+    <button class="btn-kakao" id="kakao">💬 카카오로 시작하기</button>
+    <div style="margin:20px 0;text-align:center;color:#9ca3af;font-size:13px">또는</div>
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <input id="phone" placeholder="010-1234-5678" />
+        <button class="btn-ghost" id="send" style="flex:0 0 100px;margin-top:0">코드 발송</button>
+      </div>
+      <input id="code" placeholder="인증코드 6자리 (000000)" style="margin-bottom:8px" />
+      <input id="name" placeholder="이름 (선택)" style="margin-bottom:8px" />
+      <button class="btn-primary" id="verify">로그인</button>
+    </div>
+  `;
+  $('#kakao').onclick = ()=> location.href = (API||'') + '/v1/auth/kakao';
+  $('#send').onclick = async ()=>{
+    const phone = $('#phone').value.trim();
+    try{ const r = await api('/auth/phone/send',{method:'POST',body:{phone}});
+         toast('코드 발송' + (r.code?` (개발: ${r.code})`:'')); }
+    catch(e){ toast(e.message); }
+  };
+  $('#verify').onclick = async ()=>{
+    try{ await api('/auth/phone/verify',{method:'POST',body:{phone:$('#phone').value,code:$('#code').value,name:$('#name').value}});
+         await refreshMe(); renderHome(); }
+    catch(e){ toast(e.message); }
+  };
+};
+
+// ────────── 홈 ──────────
+const renderHome = () => {
+  if (!state.me) return renderLogin();
+  if (state.me.role === 'TRAINER') return renderTrainer();
+  if (state.me.role === 'ADMIN') return renderAdmin();
+  return renderCustomer();
+};
+
+// ────────── 고객 ──────────
+async function renderCustomer(){
+  const branches = await api('/branches');
+  view.innerHTML = `
+    <h1>예약하기</h1>
+    <p>1단계 · 지점을 선택해주세요</p>
+    ${branches.map(b=>`
+      <div class="card btn" data-id="${b.id}" data-name="${b.name}">
+        <strong>${b.name}</strong>
+        <div style="color:var(--muted);font-size:14px;margin-top:4px">${b.location||''}</div>
+      </div>`).join('')}
+    <button class="btn-ghost" id="myres">내 예약 보기</button>
+    <button class="btn-ghost" id="logout">로그아웃</button>
+  `;
+  view.querySelectorAll('.card.btn').forEach(c=>c.onclick = ()=>{
+    state.branch = {id:c.dataset.id, name:c.dataset.name};
+    renderDate();
+  });
+  $('#myres').onclick = renderMyReservations;
+  $('#logout').onclick = async ()=>{ await api('/auth/logout',{method:'POST'}); state.me=null; renderLogin(); };
+}
+
+function renderDate(){
+  const today = new Date();
+  const dates = Array.from({length:30}, (_,i)=>{
+    const d = new Date(today); d.setDate(today.getDate()+i);
+    return { iso:d.toISOString().slice(0,10), day:'일월화수목금토'[d.getDay()], num:d.getDate(), full:d };
+  });
+  view.innerHTML = `
+    <button class="btn-ghost" id="back" style="margin-bottom:12px">← ${state.branch.name}</button>
+    <h1>날짜 선택</h1>
+    <p>2단계 · 30일 이내</p>
+    <div class="date-strip" id="strip">
+      ${dates.map(d=>`<div class="date-chip" data-iso="${d.iso}"><div class="d">${d.day}</div><div class="n">${d.num}</div></div>`).join('')}
+    </div>
+    <div id="slots"></div>
+  `;
+  $('#back').onclick = renderCustomer;
+  view.querySelectorAll('.date-chip').forEach(c=>c.onclick = async ()=>{
+    view.querySelectorAll('.date-chip').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+    state.date = c.dataset.iso;
+    await renderSlots();
+  });
+}
+
+async function renderSlots(){
+  const slots = await api(`/branches/${state.branch.id}/slots?date=${state.date}`);
+  $('#slots').innerHTML = `
+    <h2 style="margin-top:18px">시간 선택</h2>
+    <p>3단계 · 30분 단위</p>
+    <div class="slot-grid">
+      ${slots.map(s=>`<div class="slot" data-id="${s.id}" data-status="${s.status}">${s.start.slice(0,5)}</div>`).join('')}
+    </div>
+  `;
+  $('#slots').querySelectorAll('.slot').forEach(s=>s.onclick = async ()=>{
+    if (['FULL','CLOSED','BLOCKED','LOCKED'].includes(s.dataset.status)) return toast('이 시간은 선택할 수 없습니다');
+    try {
+      await api(`/slots/${s.dataset.id}/lock`,{method:'POST'});
+      $('#slots').querySelectorAll('.slot').forEach(x=>x.classList.remove('selected'));
+      s.classList.add('selected');
+      state.slot = {id:s.dataset.id, start:s.textContent};
+      renderConfirm();
+    } catch(e){ toast(e.message); }
+  });
+}
+
+function renderConfirm(){
+  view.innerHTML = `
+    <h1>예약 확인</h1>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">지점</span><strong>${state.branch.name}</strong></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">날짜</span><strong>${state.date}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">시간</span><strong>${state.slot.start}</strong></div>
+    </div>
+    <p style="font-size:13px">취소 정책: 시작 2시간 전까지 무료 취소</p>
+    <button class="btn-primary" id="confirm">예약 확정</button>
+    <button class="btn-ghost" id="cancel">취소</button>
+  `;
+  $('#confirm').onclick = async ()=>{
+    try {
+      await api('/reservations',{method:'POST',body:{slotId:state.slot.id}});
+      toast('✅ 예약 완료! 카카오 알림톡 발송됨');
+      setTimeout(renderMyReservations, 800);
+    } catch(e){ toast(e.message); }
+  };
+  $('#cancel').onclick = renderCustomer;
+}
+
+async function renderMyReservations(){
+  const list = await api('/reservations/me');
+  view.innerHTML = `
+    <button class="btn-ghost" id="back">← 홈</button>
+    <h1 style="margin-top:12px">내 예약</h1>
+    ${list.length===0 ? '<div class="empty">예약 내역이 없습니다</div>' :
+      list.map(r=>`
+        <div class="res-item">
+          <div>
+            <div><strong>${r.branch_name}</strong> · ${r.start_time?.slice(0,5)}</div>
+            <div class="meta">${new Date(r.slot_date).toISOString().slice(0,10)}</div>
+          </div>
+          <div style="text-align:right">
+            <span class="tag ${r.status==='CONFIRMED'?'green':r.status==='PENDING'?'orange':'red'}">${r.status}</span>
+            ${['PENDING','CONFIRMED'].includes(r.status)?`<button class="btn-ghost" style="margin-top:6px;min-height:32px;padding:0 10px;font-size:13px" data-cancel="${r.id}">취소</button>`:''}
+          </div>
+        </div>`).join('')
+    }
+  `;
+  $('#back').onclick = renderCustomer;
+  view.querySelectorAll('[data-cancel]').forEach(b=>b.onclick = async ()=>{
+    try{ const r=await api(`/reservations/${b.dataset.cancel}`,{method:'DELETE'}); toast(r.penalty?'⚠️ 패널티 취소':'취소 완료'); renderMyReservations(); }
+    catch(e){ toast(e.message); }
+  });
+}
+
+// ────────── 트레이너 ──────────
+async function renderTrainer(){
+  const today = new Date().toISOString().slice(0,10);
+  let schedule = [];
+  try { schedule = await api(`/trainer/schedule?date=${today}`); }
+  catch(e){ view.innerHTML = `<h1>트레이너</h1><div class="empty">${e.message}<br/>관리자에 트레이너로 등록 필요</div>`; return; }
+  view.innerHTML = `
+    <h1>오늘 일정</h1>
+    <p>${today}</p>
+    ${schedule.filter(s=>s.reservation_id).length===0 ? '<div class="empty">오늘 예약이 없습니다</div>' :
+      schedule.filter(s=>s.reservation_id).map(s=>`
+        <div class="res-item">
+          <div>
+            <div><strong>${s.start_time.slice(0,5)}</strong> · ${s.customer_name||'-'}</div>
+            <div class="meta">${s.customer_phone||''}</div>
+          </div>
+          <div style="text-align:right">
+            <span class="tag ${s.status==='CONFIRMED'?'green':'orange'}">${s.status}</span>
+            ${s.status==='PENDING'?`<div style="margin-top:6px"><button class="btn-ghost" style="display:inline-block;width:auto;min-height:32px;padding:0 10px;font-size:13px" data-approve="${s.reservation_id}">승인</button> <button class="btn-ghost" style="display:inline-block;width:auto;min-height:32px;padding:0 10px;font-size:13px" data-reject="${s.reservation_id}">거절</button></div>`:''}
+          </div>
+        </div>`).join('')
+    }
+  `;
+  view.querySelectorAll('[data-approve]').forEach(b=>b.onclick = async ()=>{
+    await api(`/trainer/reservations/${b.dataset.approve}/approve`,{method:'PATCH'}); toast('승인 완료'); renderTrainer();
+  });
+  view.querySelectorAll('[data-reject]').forEach(b=>b.onclick = async ()=>{
+    await api(`/trainer/reservations/${b.dataset.reject}/reject`,{method:'PATCH',body:{reason:'트레이너 거절'}}); toast('거절 완료'); renderTrainer();
+  });
+}
+
+// ────────── 관리자 ──────────
+async function renderAdmin(){
+  const d = await api('/admin/dashboard');
+  view.innerHTML = `
+    <h1>관리자 대시보드</h1>
+    <div class="stat-grid">
+      ${d.byBranch.map(b=>`<div class="stat-card"><div class="label">${b.name}</div><div class="value">${b.today_count}</div></div>`).join('')}
+      <div class="stat-card"><div class="label">승인 대기</div><div class="value">${d.pendingApprovals}</div></div>
+    </div>
+    <h2 style="margin-top:18px">인기 시간대</h2>
+    <div class="card">
+      ${d.popularSlots.length===0?'<div class="empty">데이터 없음</div>':
+        d.popularSlots.map(p=>`<div class="bar"><span style="width:60px">${p.start_time.slice(0,5)}</span><div class="b"><span style="width:${Math.min(100, p.cnt*20)}%"></span></div><span>${p.cnt}</span></div>`).join('')
+      }
+    </div>
+    <button class="btn-ghost" id="trainers">트레이너 관리</button>
+    <button class="btn-ghost" id="stats">월별 통계</button>
+  `;
+  $('#trainers').onclick = renderAdminTrainers;
+  $('#stats').onclick = renderAdminStats;
+}
+
+async function renderAdminTrainers(){
+  const list = await api('/admin/trainers');
+  view.innerHTML = `
+    <button class="btn-ghost" id="back">← 대시보드</button>
+    <h1 style="margin-top:12px">트레이너 관리</h1>
+    ${list.map(t=>`
+      <div class="res-item">
+        <div><strong>${t.name}</strong><div class="meta">${t.branch_name} · ${t.phone||''}</div></div>
+        <span class="tag ${t.is_active?'green':''}">${t.is_active?'활성':'비활성'}</span>
+      </div>`).join('')}
+  `;
+  $('#back').onclick = renderAdmin;
+}
+
+async function renderAdminStats(){
+  const m = new Date().toISOString().slice(0,7);
+  const s = await api(`/admin/stats?month=${m}`);
+  const maxConf = Math.max(1, ...s.monthly.map(x=>x.confirmed));
+  view.innerHTML = `
+    <button class="btn-ghost" id="back">← 대시보드</button>
+    <h1 style="margin-top:12px">${m} 통계</h1>
+    <h2>일별 확정 예약</h2>
+    <div class="card">
+      ${s.monthly.length===0?'<div class="empty">데이터 없음</div>':
+        s.monthly.map(d=>`<div class="bar"><span style="width:80px;font-size:12px">${d.day.slice(5)}</span><div class="b"><span style="width:${(d.confirmed/maxConf)*100}%"></span></div><span>${d.confirmed}</span></div>`).join('')
+      }
+    </div>
+  `;
+  $('#back').onclick = renderAdmin;
+}
+
+// ────────── 부팅 ──────────
+(async ()=>{
+  try { await refreshMe(); } catch(e){}
+  renderHome();
+})();
+</script>
+</body>
+</html>
