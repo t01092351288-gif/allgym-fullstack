@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { api, Role, SessionUser } from '@/lib/api';
+import { InstallButton } from '@/components/pwa';
 
 type Props = {
   user: SessionUser | null;
@@ -59,6 +60,7 @@ export default function TopNav({ user, onRoleChanged }: Props) {
         >
           문서
         </Link>
+        <InstallButton />
         {user ? (
           <>
             <span className="rounded-full bg-oljim-soft px-3 py-2 text-sm font-medium text-oljim-muted">

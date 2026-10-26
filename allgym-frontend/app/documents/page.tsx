@@ -155,7 +155,9 @@ export default function DocumentsPage() {
         <div className="card space-y-3">
           <div>
             <h2 className="text-xl font-bold">내 기기 파일 열기</h2>
-            <p className="text-sm text-oljim-muted">업로드 없이 이 기기에서만 열어봅니다.</p>
+            <p className="text-sm text-oljim-muted">
+              업로드 없이 이 기기에서만 열어봅니다. <Link href="/open" className="underline">전체 화면으로 열기</Link>
+            </p>
           </div>
           <input className="input" type="file" accept={ACCEPT} onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
           {localFile ? <DocumentViewer key={`${localFile.name}-${localFile.size}`} blob={localFile} mimeType={localFile.type} fileName={localFile.name} /> : null}
