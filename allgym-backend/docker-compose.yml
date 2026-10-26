@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: oljim
+      POSTGRES_PASSWORD: oljim
+      POSTGRES_DB: oljim
+    ports:
+      - "5432:5432"
+    volumes:
+      - oljim_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "4000:4000"
+    command: sh -c "npm run migrate && npm run seed && npm start"
+
+volumes:
+  oljim_pgdata:

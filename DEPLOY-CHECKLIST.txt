@@ -1,0 +1,26 @@
+[올짐 실서버 배포 체크리스트]
+
+1. 프론트(Vercel)
+- Root Directory = allgym-frontend
+- NEXT_PUBLIC_API_BASE_URL=https://api.oljim.kr
+- app.oljim.kr 도메인 연결
+
+2. 백엔드(Render)
+- Root Directory = allgym-backend
+- Start Command = npm run migrate && npm start
+- DATABASE_URL / REDIS_URL 설정
+- WEB_BASE_URL=https://app.oljim.kr
+- APP_BASE_URL=https://api.oljim.kr
+- COOKIE_SECURE=true
+
+3. 카카오
+- REST API KEY 발급
+- Redirect URI = https://api.oljim.kr/v1/auth/kakao/callback
+- Web 플랫폼 = https://app.oljim.kr
+
+4. 배포 후 검증
+- /health 응답 확인
+- /login 접속 확인
+- 고객 예약 생성
+- 트레이너 승인
+- 관리자 슬롯 잠금

@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: allgym-backend
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm run migrate && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: PGSSL
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: ENABLE_KAKAO_FALLBACK
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: oljim-pg
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: oljim-redis
+          property: connectionString
+      - key: WEB_BASE_URL
+        value: https://your-frontend.vercel.app
+      - key: KAKAO_REST_API_KEY
+        sync: false
+      - key: KAKAO_REDIRECT_URI
+        value: https://allgym-backend.onrender.com/v1/auth/kakao/callback
+
+databases:
+  - name: oljim-pg
+    plan: free
+
+  # Render Redis (별도 리소스로 추가)
