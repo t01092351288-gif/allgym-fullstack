@@ -116,6 +116,12 @@ NEXT_PUBLIC_API_BASE_URL=https://api.oljim.kr
 
 ## 6. 백엔드 배포 절차 (Render)
 
+> **원클릭 배포**: 레포 루트의 `render.yaml`(Blueprint)로 서버 + PostgreSQL + Redis를 한 번에 만듭니다.
+> Render → New → Blueprint → 이 레포 선택 → Apply.
+> 그다음 Vercel 프로젝트 환경변수에 `API_PROXY_TARGET=<Render 서버 주소>`를 넣고 재배포하면,
+> 프론트의 `/v1/*` 요청이 같은 사이트를 거쳐 백엔드로 전달되어 로그인 쿠키가 정상 동작합니다.
+> 기본값은 `DEMO_MODE=true`(인증코드 화면 표시·000000 로그인·역할 전환 허용)이므로 실제 회원을 받기 전에 반드시 `false`로 바꾸세요.
+
 ### 6.1 리소스 생성 순서
 1. PostgreSQL 생성
 2. Redis 생성

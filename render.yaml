@@ -1,0 +1,56 @@
+# Render 원클릭 배포 설정 (Blueprint)
+# Render 대시보드 → New → Blueprint → 이 레포 선택하면 서버 + Postgres + Redis가 한 번에 만들어짐
+services:
+  - type: web
+    name: allgym-api
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: allgym-backend
+    buildCommand: npm ci
+    # 테이블 생성 → DB가 비어 있을 때만 샘플 데이터 → 서버 시작
+    startCommand: npm run migrate && npm run seed:if-empty && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: allgym-db
+          property: connectionString
+      - key: PGSSL
+        value: "false"
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: allgym-redis
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: WEB_BASE_URL
+        value: https://allgym-fullstack.vercel.app
+      # 데모 모드: 인증코드 화면 표시, 000000 로그인, 역할 전환 버튼 허용.
+      # 누구나 관리자가 될 수 있으므로 실제 회원을 받기 전에 false로 바꾸고 카카오 키를 넣을 것.
+      - key: DEMO_MODE
+        value: "true"
+      - key: ENABLE_KAKAO_FALLBACK
+        value: "true"
+      - key: KAKAO_REDIRECT_URI
+        value: https://allgym-fullstack.vercel.app/v1/auth/kakao/callback
+
+  - type: keyvalue
+    name: allgym-redis
+    region: singapore
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: allgym-db
+    region: singapore
+    plan: free
+    databaseName: oljim
+    user: oljim

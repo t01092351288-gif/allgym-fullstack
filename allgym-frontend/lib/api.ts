@@ -38,7 +38,10 @@ export type DocumentMeta = {
   uploaded_by_name?: string | null;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+// 운영: 비워 두면 같은 사이트의 /v1/* 로 요청 → next.config의 rewrites가 백엔드로 전달
+// (프론트와 백엔드 도메인이 달라도 로그인 쿠키가 같은 사이트 쿠키로 저장됨)
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4000');
 
 async function readError(res: Response) {
   const json = await res.json().catch(() => null);

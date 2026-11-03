@@ -15,6 +15,9 @@ const routes = require('./routes');
 
 const app = express();
 
+// Render·Vercel 프록시 뒤에서 https 쿠키(secure)와 접속 IP를 올바르게 인식
+app.set('trust proxy', 1);
+
 // 기본 미들웨어
 app.use(helmet());
 app.use(
