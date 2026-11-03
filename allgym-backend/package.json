@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "migrate": "node src/db/migrate.js",
-    "seed": "node src/db/seed.js"
+    "seed": "node src/db/seed.js",
+    "seed:if-empty": "node src/db/seed-if-empty.js"
   },
   "dependencies": {
     "axios": "^1.7.2",

@@ -5,6 +5,7 @@ const ApiError = require('../utils/ApiError');
 const { ok } = require('../utils/respond');
 const kakao = require('../services/kakao');
 const { redisClient } = require('../config/redis');
+const { isDemoMode } = require('../config/mode');
 
 // ── 1. 전화번호 인증 코드 발송 (개발용: 랜덤 6자리, Redis 5분 보관)
 router.post('/phone/send', async (req, res, next) => {
@@ -16,7 +17,7 @@ router.post('/phone/send', async (req, res, next) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     await redisClient.set(`oljim:phone:${phone}`, code, { EX: 300 });
     // 운영: CoolSMS 발송. 개발: 코드 자체를 응답으로 반환
-    ok(res, { code: process.env.NODE_ENV === 'production' ? undefined : code, expiresIn: 300 });
+    ok(res, { code: isDemoMode() ? code : undefined, expiresIn: 300 });
   } catch (e) {
     next(e);
   }
@@ -28,8 +29,9 @@ router.post('/phone/verify', async (req, res, next) => {
     const { phone, code, name } = req.body || {};
     if (!phone || !code) throw new ApiError(400, 'BAD_REQUEST', '필수 값이 누락되었습니다');
     const saved = await redisClient.get(`oljim:phone:${phone}`);
-    // 개발 편의: 인증코드가 '000000'이면 통과
-    if (saved !== code && code !== '000000') {
+    // 데모 모드에서만 인증코드 '000000' 통과 (운영에서 켜 두면 누구나 아무 번호로 로그인 가능)
+    const demoBypass = isDemoMode() && code === '000000';
+    if (!demoBypass && (!saved || saved !== code)) {
       throw new ApiError(400, 'CODE_MISMATCH', '인증 코드가 올바르지 않습니다');
     }
     await redisClient.del(`oljim:phone:${phone}`);
@@ -121,7 +123,7 @@ router.post('/logout', (req, res) => {
 // ── 7. (개발용) 역할 변경: 트레이너/관리자 데모용
 router.post('/dev/switch-role', async (req, res, next) => {
   try {
-    if (process.env.NODE_ENV === 'production') throw new ApiError(403, 'FORBIDDEN');
+    if (!isDemoMode()) throw new ApiError(403, 'FORBIDDEN');
     const { role } = req.body || {};
     if (!['CUSTOMER', 'TRAINER', 'ADMIN'].includes(role)) {
       throw new ApiError(400, 'BAD_ROLE');
